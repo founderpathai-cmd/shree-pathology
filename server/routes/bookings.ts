@@ -323,4 +323,44 @@ router.get("/:id/report", async (req: express.Request, res: express.Response) =>
   }
 });
 
+// Update booking status (Admin / Operations)
+router.patch("/:id/status", async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const { status, paymentStatus, notes } = req.body;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const updated = await Booking.findByIdAndUpdate(
+          id,
+          {
+            ...(status && { status }),
+            ...(paymentStatus && { paymentStatus }),
+            ...(notes && { notes }),
+            updatedAt: new Date(),
+          },
+          { new: true }
+        );
+        if (updated) return res.json(updated);
+      } catch (err) {
+        console.warn("MongoDB status update fallback:", err);
+      }
+    }
+
+    const index = fallbackBookings.findIndex((b) => b.id === id || b._id === id || b.bookingRef === id);
+    if (index !== -1) {
+      if (status) fallbackBookings[index].status = status;
+      if (paymentStatus) fallbackBookings[index].paymentStatus = paymentStatus;
+      if (notes) fallbackBookings[index].notes = notes;
+      fallbackBookings[index].updatedAt = new Date();
+      return res.json(fallbackBookings[index]);
+    }
+
+    return res.status(404).json({ message: "Booking not found" });
+  } catch (error) {
+    console.error("Update Booking Status Error:", error);
+    res.status(500).json({ message: "Server error updating booking status" });
+  }
+});
+
 export default router;

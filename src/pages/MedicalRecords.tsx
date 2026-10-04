@@ -21,8 +21,10 @@ import {
   X,
   ExternalLink,
   ChevronRight,
-  Plus
+  Plus,
+  Sparkles
 } from "lucide-react";
+import AIReportAnalyzer, { ReportDataForAI } from "../components/AIReportAnalyzer";
 
 interface BookingRecord {
   id?: string;
@@ -82,7 +84,7 @@ interface ReportDetails {
 
 export default function MedicalRecords() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"reports" | "bookings" | "trends">("reports");
+  const [activeTab, setActiveTab] = useState<"reports" | "bookings" | "trends" | "ai_explainer">("reports");
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,6 +93,10 @@ export default function MedicalRecords() {
   // Report Modal State
   const [selectedReport, setSelectedReport] = useState<ReportDetails | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
+
+  // AI Report Explainer Modal State
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiReportToAnalyze, setAiReportToAnalyze] = useState<ReportDataForAI | null>(null);
 
   useEffect(() => {
     fetchRecords();
@@ -308,6 +314,22 @@ export default function MedicalRecords() {
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
                 Biomarker Trends
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("ai_explainer")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === "ai_explainer"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Sparkles className="h-4 w-4 text-cyan-600" />
+                <span>AI Report Analyser</span>
+                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                  AI
+                </span>
+              </button>
             </div>
 
             {/* Search and Patient filter */}
@@ -409,13 +431,43 @@ export default function MedicalRecords() {
                           </div>
                         </div>
 
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                           <button
                             type="button"
                             onClick={() => handleOpenReport(booking)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+                            className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
                           >
                             <FileText className="h-3.5 w-3.5" /> View Clinical Report
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const bookingId = booking.id || booking._id || booking.bookingRef || "BKG-1029";
+                              try {
+                                const res = await fetch(`/api/bookings/${bookingId}/report`);
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  setAiReportToAnalyze(data);
+                                  setIsAiModalOpen(true);
+                                }
+                              } catch {
+                                setAiReportToAnalyze({
+                                  testName: booking.testName || "Diagnostic Pathology Test",
+                                  patientName: booking.patientName,
+                                  patientAge: booking.age,
+                                  patientGender: booking.gender,
+                                  labName: booking.labName,
+                                  parameters: [],
+                                });
+                                setIsAiModalOpen(true);
+                              }
+                            }}
+                            className="bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 py-2 px-3 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                            title="AI Report Explainer"
+                          >
+                            <Sparkles className="h-3.5 w-3.5 text-cyan-600" />
+                            <span>Explain with AI</span>
                           </button>
 
                           <button
@@ -652,6 +704,13 @@ export default function MedicalRecords() {
               </div>
             </div>
           )}
+
+          {/* TAB 4: AI REPORT ANALYZER */}
+          {activeTab === "ai_explainer" && (
+            <div className="p-4 sm:p-6 bg-slate-50/50">
+              <AIReportAnalyzer />
+            </div>
+          )}
         </div>
       </div>
 
@@ -746,6 +805,46 @@ export default function MedicalRecords() {
                 <span className="text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-lg border border-blue-200">
                   Serum / Blood Analysis
                 </span>
+              </div>
+
+              {/* AI Report Explainer Banner */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 p-4 rounded-2xl text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 flex items-center justify-center shrink-0">
+                    <Sparkles className="h-5 w-5 text-cyan-300" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                      <span>Don't understand medical numbers?</span>
+                      <span className="text-[10px] bg-cyan-400/20 text-cyan-300 font-extrabold px-1.5 py-0.5 rounded border border-cyan-400/40">
+                        AI
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Let our AI translate these {selectedReport.parameters.length} parameters into simple, reassuring plain English.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAiReportToAnalyze({
+                      testName: selectedReport.testName,
+                      patientName: selectedReport.patientName,
+                      patientAge: selectedReport.patientAge,
+                      patientGender: selectedReport.patientGender,
+                      labName: selectedReport.labName,
+                      parameters: selectedReport.parameters,
+                      clinicalImpression: selectedReport.clinicalImpression,
+                    });
+                    setIsAiModalOpen(true);
+                  }}
+                  className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span>Explain Report with AI</span>
+                </button>
               </div>
 
               {/* Biomarkers Table */}
@@ -845,6 +944,18 @@ export default function MedicalRecords() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Report Explainer Modal */}
+      {isAiModalOpen && (
+        <AIReportAnalyzer
+          report={aiReportToAnalyze}
+          isModal={true}
+          onClose={() => {
+            setIsAiModalOpen(false);
+            setAiReportToAnalyze(null);
+          }}
+        />
       )}
     </div>
   );

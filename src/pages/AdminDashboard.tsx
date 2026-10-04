@@ -25,7 +25,13 @@ import {
   X,
   Sparkles,
   Save,
-  Tag
+  Tag,
+  Phone,
+  MessageSquare,
+  ExternalLink,
+  Eye,
+  RefreshCw,
+  MapPin
 } from "lucide-react";
 
 interface LabPriceEntry {
@@ -182,54 +188,276 @@ export default function AdminDashboard() {
   const [notification, setNotification] = useState<string | null>(null);
 
   // Bookings state
-  const [bookings, setBookings] = useState([
+  interface BookingRecord {
+    id: string;
+    bookingRef: string;
+    patient: string;
+    age?: number;
+    gender?: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    landmark?: string;
+    city?: string;
+    pincode?: string;
+    collectionType?: string;
+    test: string;
+    lab: string;
+    status: string;
+    date: string;
+    timeSlot?: string;
+    amount: string;
+    paymentStatus?: string;
+    fastingConfirmed?: boolean;
+    createdAt?: string;
+    notes?: string;
+  }
+
+  const [bookings, setBookings] = useState<BookingRecord[]>([
     {
       id: "SHR-1029",
+      bookingRef: "SHR-1029",
       patient: "Amit Sharma",
+      age: 38,
+      gender: "Male",
       test: "Comprehensive Full Body Checkup",
       lab: "Diagnopein Diagnostics",
       status: "Completed",
       date: "2026-10-01",
+      timeSlot: "08:00 AM - 09:00 AM",
       amount: "₹2,499",
-      phone: "+91 98201 23456"
+      phone: "+91 98201 23456",
+      email: "amit.sharma@gmail.com",
+      address: "Flat 402, Baner Road, Near High Street",
+      city: "Pune",
+      pincode: "411045",
+      collectionType: "home",
+      paymentStatus: "Paid",
+      fastingConfirmed: true
     },
     {
       id: "SHR-1030",
+      bookingRef: "SHR-1030",
       patient: "Pooja Patil",
+      age: 29,
+      gender: "Female",
       test: "Thyroid Profile (T3, T4, TSH)",
       lab: "Krsnaa Diagnostics",
       status: "Confirmed",
       date: "2026-10-04",
+      timeSlot: "07:30 AM - 08:30 AM",
       amount: "₹499",
-      phone: "+91 98112 23344"
+      phone: "+91 98112 23344",
+      email: "pooja.patil@yahoo.com",
+      address: "B-12, Green Park Avenue, Kothrud",
+      city: "Pune",
+      pincode: "411038",
+      collectionType: "home",
+      paymentStatus: "Pending",
+      fastingConfirmed: true
     },
     {
       id: "SHR-1031",
+      bookingRef: "SHR-1031",
       patient: "Rajesh Joshi",
+      age: 45,
+      gender: "Male",
       test: "Lipid Profile (Cholesterol)",
       lab: "General Diagnostics",
       status: "Pending",
       date: "2026-10-05",
+      timeSlot: "09:00 AM - 10:00 AM",
       amount: "₹649",
-      phone: "+91 98765 43210"
+      phone: "+91 98765 43210",
+      email: "rajesh.joshi@gmail.com",
+      address: "Sector 24, Pradhikaran, Nigdi",
+      city: "Pune",
+      pincode: "411044",
+      collectionType: "home",
+      paymentStatus: "Pending",
+      fastingConfirmed: true
     },
     {
       id: "SHR-1032",
+      bookingRef: "SHR-1032",
       patient: "Sunita Deshmukh",
+      age: 52,
+      gender: "Female",
       test: "HbA1c & Fasting Sugar",
       lab: "Agilus Diagnostics",
       status: "Completed",
       date: "2026-10-02",
+      timeSlot: "08:00 AM - 09:00 AM",
       amount: "₹499",
-      phone: "+91 99200 33445"
+      phone: "+91 99200 33445",
+      email: "sunita.d@outlook.com",
+      address: "EON Free Zone Road, Kharadi",
+      city: "Pune",
+      pincode: "411014",
+      collectionType: "home",
+      paymentStatus: "Paid",
+      fastingConfirmed: true
     }
   ]);
   const [bookingFilterStatus, setBookingFilterStatus] = useState("All");
   const [searchBookingPatient, setSearchBookingPatient] = useState("");
+  const [selectedBookingModal, setSelectedBookingModal] = useState<BookingRecord | null>(null);
+  const [isFetchingBookings, setIsFetchingBookings] = useState(false);
 
   const showToast = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3500);
+  };
+
+  // Fetch live bookings from API
+  const fetchBookings = async () => {
+    try {
+      setIsFetchingBookings(true);
+      const res = await fetch("/api/bookings");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setBookings(
+            data.map((b: any) => ({
+              id: b.id || b._id || b.bookingRef || "SHR-1000",
+              bookingRef: b.bookingRef || b.id || b._id,
+              patient: b.patientName || b.patient || "Patient",
+              age: b.age || 35,
+              gender: b.gender || "Not specified",
+              phone: b.phone || "+91 98000 00000",
+              email: b.email || "",
+              address: b.address || "Pune Center Visit",
+              landmark: b.landmark || "",
+              city: b.city || "Pune",
+              pincode: b.pincode || "411045",
+              collectionType: b.collectionType || "home",
+              test: b.testName || b.test?.name || b.test || "Diagnostic Test",
+              lab: b.labName || b.lab?.name || b.lab || "Diagnopein Diagnostics",
+              date: b.date || "Scheduled",
+              timeSlot: b.timeSlot || "08:00 AM - 09:00 AM",
+              status: b.status || "Confirmed",
+              amount: typeof b.amount === "number" ? `₹${b.amount}` : (b.amount || "₹0"),
+              paymentStatus: b.paymentStatus || "Pending",
+              fastingConfirmed: Boolean(b.fastingConfirmed),
+              createdAt: b.createdAt,
+              notes: b.notes || ""
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch bookings from API:", err);
+    } finally {
+      setIsFetchingBookings(false);
+    }
+  };
+
+  // Update a booking status
+  const handleUpdateBookingStatus = async (bookingId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+        );
+        if (selectedBookingModal && selectedBookingModal.id === bookingId) {
+          setSelectedBookingModal({ ...selectedBookingModal, status: newStatus });
+        }
+        showToast(`Order ${bookingId} status updated to ${newStatus}`);
+      } else {
+        // Fallback local update
+        setBookings((prev) =>
+          prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+        );
+        showToast(`Order ${bookingId} status updated to ${newStatus}`);
+      }
+    } catch (err) {
+      console.error("Status update error:", err);
+    }
+  };
+
+  // Export all bookings as CSV
+  const handleExportCSV = () => {
+    if (bookings.length === 0) {
+      alert("No bookings to export");
+      return;
+    }
+
+    const headers = [
+      "Booking Ref",
+      "Date",
+      "Time Slot",
+      "Patient Name",
+      "Age",
+      "Gender",
+      "Phone",
+      "Email",
+      "Address",
+      "City",
+      "Pincode",
+      "Collection Type",
+      "Test Name",
+      "Partner Lab",
+      "Amount",
+      "Payment Status",
+      "Status",
+      "Fasting Confirmed"
+    ];
+
+    const rows = bookings.map((b) => [
+      `"${b.bookingRef || b.id}"`,
+      `"${b.date}"`,
+      `"${b.timeSlot || ""}"`,
+      `"${b.patient}"`,
+      `"${b.age || ""}"`,
+      `"${b.gender || ""}"`,
+      `"${b.phone}"`,
+      `"${b.email || ""}"`,
+      `"${(b.address || "").replace(/"/g, '""')}"`,
+      `"${b.city || "Pune"}"`,
+      `"${b.pincode || ""}"`,
+      `"${b.collectionType || "home"}"`,
+      `"${(b.test || "").replace(/"/g, '""')}"`,
+      `"${(b.lab || "").replace(/"/g, '""')}"`,
+      `"${b.amount}"`,
+      `"${b.paymentStatus || "Pending"}"`,
+      `"${b.status}"`,
+      `"${b.fastingConfirmed ? "Yes" : "No"}"`
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Shree_Diagnostics_Orders_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Exported orders CSV successfully!");
+  };
+
+  // WhatsApp order dispatch helper
+  const handleOpenWhatsApp = (b: BookingRecord) => {
+    const cleanPhone = b.phone.replace(/[^0-9]/g, "");
+    const msg = `*Shree Healthcare Diagnostics - Order Booking Confirmation*\n\n` +
+      `📋 *Booking ID:* ${b.bookingRef || b.id}\n` +
+      `👤 *Patient:* ${b.patient} (${b.age || 35} yrs, ${b.gender || "M/F"})\n` +
+      `🔬 *Test:* ${b.test}\n` +
+      `🏥 *Partner Lab:* ${b.lab}\n` +
+      `📅 *Date & Slot:* ${b.date}, ${b.timeSlot || "Morning"}\n` +
+      `📍 *Collection Address:* ${b.address || "Pune Center Visit"}, ${b.city || "Pune"} - ${b.pincode || "411045"}\n` +
+      `💰 *Amount:* ${b.amount} (${b.paymentStatus || "Pending"})\n` +
+      `🩸 *Fasting:* ${b.fastingConfirmed ? "Required 10-12 hrs" : "Not Required"}\n\n` +
+      `Our certified phlebotomist will arrive with sterilized vacutainer kits. For queries, contact Shree Support.`;
+
+    const targetNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    window.open(`https://api.whatsapp.com/send?phone=${targetNumber}&text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   // Fetch tests with multi-lab pricing matrix
@@ -250,6 +478,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchPricingMatrix();
+    fetchBookings();
   }, []);
 
   // Handle saving an individual lab price update
@@ -1041,19 +1270,63 @@ export default function AdminDashboard() {
         {/* ================= TAB 3: BOOKINGS & REPORTS ================= */}
         {activeTab === "bookings" && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50">
-              <h2 className="text-sm font-bold text-slate-900">Recent Patient Bookings & Phlebotomy Assignments</h2>
-              <div className="flex items-center gap-2">
+            <div className="p-5 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-50">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider mb-1">
+                  <span>Pune & PCMC Doorstep Phlebotomy</span>
+                </div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Patient Bookings, Order Records & Home Dispatch
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Receive orders, dispatch certified phlebotomists, view patient details, and manage digital lab reports.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                {/* Search */}
+                <div className="relative flex-1 sm:w-60">
+                  <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search patient, phone, ID..."
+                    value={searchBookingPatient}
+                    onChange={(e) => setSearchBookingPatient(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Filter */}
                 <select
                   value={bookingFilterStatus}
                   onChange={(e) => setBookingFilterStatus(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs rounded-xl px-3 py-1.5 font-bold"
+                  className="bg-white border border-slate-200 text-xs rounded-xl px-3 py-1.5 font-bold text-slate-700 outline-none"
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Confirmed">Confirmed</option>
+                  <option value="All">All Statuses ({bookings.length})</option>
                   <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
+
+                {/* Live Refresh */}
+                <button
+                  onClick={fetchBookings}
+                  disabled={isFetchingBookings}
+                  className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition-colors"
+                  title="Refresh Live Orders"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isFetchingBookings ? "animate-spin text-blue-600" : ""}`} />
+                </button>
+
+                {/* Export CSV */}
+                <button
+                  onClick={handleExportCSV}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export CSV</span>
+                </button>
               </div>
             </div>
 
@@ -1061,57 +1334,161 @@ export default function AdminDashboard() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100/70 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3.5">Booking Ref</th>
-                    <th className="px-6 py-3.5">Patient Details</th>
-                    <th className="px-6 py-3.5">Selected Test / Package</th>
-                    <th className="px-6 py-3.5">Assigned Laboratory</th>
-                    <th className="px-6 py-3.5">Scheduled Slot</th>
-                    <th className="px-6 py-3.5">Total Paid</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5 text-right">Actions</th>
+                    <th className="px-5 py-3.5">Booking Ref</th>
+                    <th className="px-5 py-3.5">Patient Details</th>
+                    <th className="px-5 py-3.5">Address / Area</th>
+                    <th className="px-5 py-3.5">Test & Partner Lab</th>
+                    <th className="px-5 py-3.5">Date & Slot</th>
+                    <th className="px-5 py-3.5">Amount</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {bookings
-                    .filter((b) => bookingFilterStatus === "All" || b.status === bookingFilterStatus)
+                    .filter((b) => {
+                      const matchesStatus =
+                        bookingFilterStatus === "All" || b.status === bookingFilterStatus;
+                      const q = searchBookingPatient.toLowerCase();
+                      const matchesSearch =
+                        !q ||
+                        b.patient.toLowerCase().includes(q) ||
+                        b.phone.includes(q) ||
+                        b.id.toLowerCase().includes(q) ||
+                        (b.address && b.address.toLowerCase().includes(q));
+                      return matchesStatus && matchesSearch;
+                    })
                     .map((booking) => (
                       <tr key={booking.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">{booking.id}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-4 font-mono font-bold text-slate-900">
+                          <div className="flex items-center gap-1.5">
+                            <span>{booking.id}</span>
+                            {booking.collectionType === "home" ? (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
+                                Home
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                                Lab
+                              </span>
+                            )}
+                          </div>
+                          {booking.fastingConfirmed && (
+                            <span className="text-[10px] text-amber-700 block mt-0.5">
+                              • Fasting Confirmed
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4">
                           <div className="font-bold text-slate-900">{booking.patient}</div>
-                          <div className="text-[11px] text-slate-500">{booking.phone}</div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                            <a
+                              href={`tel:${booking.phone}`}
+                              className="hover:text-blue-600 font-medium"
+                            >
+                              {booking.phone}
+                            </a>
+                            {booking.age && <span>• {booking.age}y/{booking.gender?.slice(0, 1) || "M"}</span>}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 font-medium text-slate-800">{booking.test}</td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-blue-700">{booking.lab}</span>
+
+                        <td className="px-5 py-4 max-w-[200px]">
+                          <div className="font-medium text-slate-800 truncate" title={booking.address}>
+                            {booking.address || "Pune Center Visit"}
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+                            <span>{booking.city || "Pune"} {booking.pincode ? `(${booking.pincode})` : ""}</span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-600">{booking.date}</td>
-                        <td className="px-6 py-4 font-black text-slate-900">{booking.amount}</td>
-                        <td className="px-6 py-4">
+
+                        <td className="px-5 py-4">
+                          <div className="font-semibold text-slate-900">{booking.test}</div>
+                          <div className="text-[11px] font-semibold text-blue-700 mt-0.5">
+                            {booking.lab}
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 text-slate-600">
+                          <div className="font-semibold text-slate-900">{booking.date}</div>
+                          <div className="text-[11px] text-slate-500">{booking.timeSlot || "Morning"}</div>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="font-black text-slate-900">{booking.amount}</div>
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              booking.status === "Completed"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : booking.status === "Confirmed"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-amber-100 text-amber-800"
+                            className={`text-[10px] font-bold ${
+                              booking.paymentStatus === "Paid" ? "text-emerald-700" : "text-amber-700"
                             }`}
                           >
-                            {booking.status}
+                            {booking.paymentStatus || "Pending"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => alert(`Opening report uploader for ${booking.id}`)}
-                            className="text-xs font-bold text-blue-600 hover:underline"
+
+                        <td className="px-5 py-4">
+                          <select
+                            value={booking.status}
+                            onChange={(e) => handleUpdateBookingStatus(booking.id, e.target.value)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors outline-none cursor-pointer ${
+                              booking.status === "Completed"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                : booking.status === "Confirmed"
+                                ? "bg-blue-50 text-blue-800 border-blue-300"
+                                : booking.status === "Cancelled"
+                                ? "bg-rose-50 text-rose-800 border-rose-300"
+                                : "bg-amber-50 text-amber-800 border-amber-300"
+                            }`}
                           >
-                            Upload E-Report
-                          </button>
+                            <option value="Pending">Pending</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Sample Collected">Sample Collected</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                        </td>
+
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* View Full Order Details */}
+                            <button
+                              onClick={() => setSelectedBookingModal(booking)}
+                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-slate-600 hover:text-blue-700 transition-colors"
+                              title="View Full Order & Patient Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+
+                            {/* WhatsApp Dispatch Button */}
+                            <button
+                              onClick={() => handleOpenWhatsApp(booking)}
+                              className="p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                              title="Send WhatsApp Order Confirmation / Dispatch"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </button>
+
+                            {/* Call Patient */}
+                            <a
+                              href={`tel:${booking.phone}`}
+                              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
+                              title="Call Patient"
+                            >
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     ))}
                 </tbody>
               </table>
+
+              {bookings.length === 0 && (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  No orders recorded yet. When patients book diagnostic tests, they will appear here in real time.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1590,6 +1967,189 @@ export default function AdminDashboard() {
                 className="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold"
               >
                 Close Price Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ORDER DETAILS & DISPATCH ================= */}
+      {selectedBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+            <div className="p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white flex justify-between items-center">
+              <div>
+                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block">
+                  Patient Order & Phlebotomy Dispatch
+                </span>
+                <h3 className="text-base font-bold flex items-center gap-2">
+                  <span>Order Ref: {selectedBookingModal.bookingRef || selectedBookingModal.id}</span>
+                  <span
+                    className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                      selectedBookingModal.status === "Completed"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
+                        : "bg-blue-500/20 text-cyan-300 border border-cyan-400/40"
+                    }`}
+                  >
+                    {selectedBookingModal.status}
+                  </span>
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedBookingModal(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs">
+              {/* Patient Profile */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Patient Information
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Full Name</span>
+                    <span className="font-bold text-slate-900 text-sm">{selectedBookingModal.patient}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Age / Gender</span>
+                    <span className="font-bold text-slate-900">
+                      {selectedBookingModal.age || 35} Years · {selectedBookingModal.gender || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Contact Mobile</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-bold text-slate-900">{selectedBookingModal.phone}</span>
+                      <a
+                        href={`tel:${selectedBookingModal.phone}`}
+                        className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                      >
+                        <Phone className="h-3 w-3" /> Call
+                      </a>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Email Address</span>
+                    <span className="font-medium text-slate-700">{selectedBookingModal.email || "Not provided"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sample Collection & Pune Address */}
+              <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-100">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-blue-900 mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-blue-600" /> Doorstep Collection Details
+                  </span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                    {selectedBookingModal.collectionType === "home" ? "Home Visit" : "Lab Visit"}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Address & Landmark:</span>
+                    <span className="font-semibold text-slate-900 leading-snug">
+                      {selectedBookingModal.address || "Pune Center Visit"}
+                    </span>
+                    {selectedBookingModal.landmark && (
+                      <span className="text-slate-500 block mt-0.5">
+                        Landmark: {selectedBookingModal.landmark}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-blue-100 text-[11px]">
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">City & Pincode</span>
+                      <span className="font-bold text-slate-900">
+                        {selectedBookingModal.city || "Pune"}, Maharashtra - {selectedBookingModal.pincode || "411045"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Scheduled Slot</span>
+                      <span className="font-bold text-slate-900">
+                        {selectedBookingModal.date} ({selectedBookingModal.timeSlot || "Morning"})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test & Lab Order */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Diagnostic Order
+                </div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-slate-900 text-sm">{selectedBookingModal.test}</div>
+                    <div className="text-blue-700 font-semibold mt-0.5 flex items-center gap-1">
+                      <Building2 className="h-3.5 w-3.5" />
+                      <span>Assigned to: {selectedBookingModal.lab}</span>
+                    </div>
+                    {selectedBookingModal.fastingConfirmed && (
+                      <div className="inline-flex items-center gap-1 text-[10px] text-amber-800 font-bold bg-amber-100/70 px-2 py-0.5 rounded-md mt-2">
+                        <AlertCircle className="h-3 w-3 text-amber-600" />
+                        <span>Fasting Protocol Confirmed (10-12 hours)</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-black text-slate-900">{selectedBookingModal.amount}</div>
+                    <span
+                      className={`text-[10px] font-bold ${
+                        selectedBookingModal.paymentStatus === "Paid" ? "text-emerald-700" : "text-amber-700"
+                      }`}
+                    >
+                      {selectedBookingModal.paymentStatus || "Pending"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operational Status Updater */}
+              <div className="pt-2 border-t border-slate-200">
+                <label className="font-bold text-slate-700 block mb-1.5">
+                  Update Phlebotomy / Report Status:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Confirmed", "Sample Collected", "Completed"].map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => handleUpdateBookingStatus(selectedBookingModal.id, st)}
+                      className={`py-2 px-3 rounded-xl font-bold text-xs transition-all border ${
+                        selectedBookingModal.status === st
+                          ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button
+                onClick={() => handleOpenWhatsApp(selectedBookingModal)}
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Send WhatsApp Dispatch Details</span>
+              </button>
+
+              <button
+                onClick={() => setSelectedBookingModal(null)}
+                className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-xs"
+              >
+                Done
               </button>
             </div>
           </div>

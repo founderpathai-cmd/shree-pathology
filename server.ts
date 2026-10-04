@@ -13,6 +13,7 @@ import authRoutes from "./server/routes/auth";
 import labRoutes from "./server/routes/labs";
 import testRoutes from "./server/routes/tests";
 import bookingRoutes from "./server/routes/bookings";
+import aiRoutes from "./server/routes/ai";
 
 async function startServer() {
   const app = express();
@@ -42,6 +43,7 @@ async function startServer() {
   app.use("/api/labs", labRoutes);
   app.use("/api/tests", testRoutes);
   app.use("/api/bookings", bookingRoutes);
+  app.use("/api/ai", aiRoutes);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

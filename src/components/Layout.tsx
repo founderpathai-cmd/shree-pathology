@@ -76,6 +76,12 @@ export default function Layout() {
                 Partner Labs
               </Link>
               <Link
+                to="/compare"
+                className="text-xs font-bold text-blue-700 hover:text-blue-800 bg-blue-50/80 px-2.5 py-1 rounded-md transition-colors uppercase tracking-wider border border-blue-200/50"
+              >
+                Compare Labs
+              </Link>
+              <Link
                 to="/records"
                 className="text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors uppercase tracking-wider"
               >
@@ -143,6 +149,13 @@ export default function Layout() {
               className="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-slate-50"
             >
               Partner Labs
+            </Link>
+            <Link
+              to="/compare"
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-3 py-2 rounded-xl text-sm font-bold text-blue-700 bg-blue-50/60 hover:bg-blue-50"
+            >
+              Compare Labs Side-by-Side
             </Link>
             <Link
               to="/records"

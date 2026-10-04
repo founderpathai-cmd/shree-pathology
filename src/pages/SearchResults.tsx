@@ -13,7 +13,8 @@ import {
   Calendar,
   AlertCircle,
   Beaker,
-  ChevronRight
+  ChevronRight,
+  Scale
 } from "lucide-react";
 
 interface TestItem {
@@ -683,14 +684,24 @@ export default function SearchResults() {
 
                       {/* Multi-Lab Price Comparison Strip */}
                       <div className="bg-slate-50/90 rounded-2xl p-4 border border-slate-200/80">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 mb-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
                           <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             <Building2 className="h-4 w-4 text-blue-600" />
                             Compare Lab Pricing & Turnaround Times ({DEFAULT_LABS.length} Certified Labs):
                           </span>
-                          <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-                            Free Doorstep Sample Collection
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/compare/${item.id}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 shadow-2xs transition-colors"
+                            >
+                              <Scale className="h-3 w-3 text-blue-600" />
+                              <span>Side-by-Side Table</span>
+                              <ChevronRight className="h-3 w-3" />
+                            </Link>
+                            <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md hidden sm:inline-block">
+                              Free Doorstep Sample Collection
+                            </span>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">

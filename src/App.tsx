@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import MedicalRecords from "./pages/MedicalRecords";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
+import CompareLabs from "./pages/CompareLabs";
 
 export default function App() {
   return (
@@ -18,6 +19,8 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="search" element={<SearchResults />} />
           <Route path="item/:id" element={<ItemDetails />} />
+          <Route path="compare" element={<CompareLabs />} />
+          <Route path="compare/:testId" element={<CompareLabs />} />
           <Route path="labs/:id" element={<LabDetails />} />
           <Route path="book/:testId" element={<Booking />} />
           <Route path="dashboard" element={<Dashboard />} />
